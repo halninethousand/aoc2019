@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 fn main() {
     let wire1: Vec<&str> = include_str!("../data/day3.txt").lines().next().unwrap().split(',').collect();
@@ -9,7 +9,7 @@ fn main() {
 
     let mut current_x = 0;
     let mut current_y = 0;
-    for dir in wire1 {
+    for dir in &wire1 {
         match &dir[0..1] {
             "R" => {
                 let steps = dir[1..].parse::<i32>().unwrap();
@@ -45,7 +45,7 @@ fn main() {
 
     let mut current_x = 0;
     let mut current_y = 0;
-    for dir in wire2 {
+    for dir in &wire2 {
         match &dir[0..1] {
             "R" => {
                 let steps = dir[1..].parse::<i32>().unwrap();
@@ -97,4 +97,52 @@ fn main() {
     } else {
         println!("Closest intersection distance: {}", min_distance);
     }
+
+    let (trace1, _) = trace_wire(&wire1);
+    let (trace2, _) = trace_wire(&wire2);
+
+    let intersections: HashSet<_> = trace1.keys().collect::<HashSet<_>>().intersection(&trace2.keys().collect::<HashSet<_>>()).cloned().collect();
+    
+    let mut min_steps = i32::MAX;
+    for point in intersections {
+        if *point != (0, 0) {
+            let total_steps = trace1[point] + trace2[point];
+            if total_steps < min_steps {
+                min_steps = total_steps;
+            }
+        }
+    }
+
+    if min_steps == i32::MAX {
+        println!("No intersections found");
+    } else {
+        println!("Fewest combined steps to an intersection: {}", min_steps);
+    }
+}
+
+fn trace_wire(wire: &[&str]) -> (HashMap<(i32, i32), i32>, (i32, i32)) {
+    let mut trace = HashMap::new();
+    let mut x = 0;
+    let mut y = 0;
+    let mut steps = 0;
+
+    for dir in wire {
+        let (dx, dy) = match &dir[0..1] {
+            "R" => (1, 0),
+            "L" => (-1, 0),
+            "U" => (0, 1),
+            "D" => (0, -1),
+            _ => panic!("Invalid direction: {}", dir),
+        };
+        let distance = dir[1..].parse::<i32>().unwrap();
+
+        for _ in 0..distance {
+            x += dx;
+            y += dy;
+            steps += 1;
+            trace.entry((x, y)).or_insert(steps);
+        }
+    }
+
+    (trace, (x, y))
 }
